@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Welcome to Jekyll!"
+title:  "Welcome to Windsority's website!"
 date:   2017-03-25 05:03:20 +0000
 categories: jekyll update
 ---
