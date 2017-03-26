@@ -9,7 +9,7 @@
 title: Windsority's
 email: mcfengxin@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
-  Writting blogs, learning notes, etc!
+  This website is for writting blogs, recording learning notes, etc!
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://yourdomain.com" # the base hostname & protocol for your site
 twitter_username: 
