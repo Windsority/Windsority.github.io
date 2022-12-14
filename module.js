@@ -6,8 +6,8 @@ var context = canvas.getContext("2d");
 var onMouseMove = function(event) {
     var x = event.x, y = event.y;
     context.beginPath();
-    context.moveTo(x - event.movementX, y - event.movementY);
-    context.lineTo(x, y);
+    context.moveTo(x, y);
+    context.lineTo(x + event.movementX, y + event.movementY);
     context.stroke();
 }
 
