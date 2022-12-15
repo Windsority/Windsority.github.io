@@ -23,7 +23,7 @@ canvas.onmouseup = function(event) {
 var vShaderSource = document.getElementById("vertexShader").textContent;
 var fShaderSource = document.getElementById("fragmentShader").textContent;
 
-function generateVertices(point, length, width, height) {
+function generateVertices(point, length, height, width) {
     var vertices = [];
     for (let i = 0; i <= 1; ++i) {
         for (let j = 0; j <= 1; ++j) {
@@ -92,10 +92,14 @@ function generateIndices(squareNumbers) {
 var squares = 6;
 var indices;
 var leftWallVertices;
+var backWallVertices;
+var rightWallVertices;
 
 function getModelData() {
     indices = generateIndices(squares);
-    leftWallVertices = generateVertices([-1, -1, -1], 2, 0.5, 2);
+    leftWallVertices = generateVertices([-1.5, -1, -1], 0.3, 1.6, 2);
+    backWallVertices = generateVertices([-1.2, -1, -1], 2.7, 1.6, 0.3);
+    rightWallVertices = generateVertices([1.5, -1, -1], 0.3, 1.6, 2);
 }
 
 var setup = function() {
@@ -129,26 +133,29 @@ var setup = function() {
     var vTexCoordLocation = gl.getAttribLocation(shaderProgram, "vTexCoord");
     var mvpMatrixLocation = gl.getUniformLocation(shaderProgram, "uMVP");
 
+
+
     getModelData();
     // console.log(leftWallVertices);
     var vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, leftWallVertices, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(vPositionLocation, 3, gl.FLOAT, false, 5 * Float32Array.BYTES_PER_ELEMENT, 0);
     gl.enableVertexAttribArray(vPositionLocation);
+    gl.vertexAttribPointer(vPositionLocation, 3, gl.FLOAT, false, 5 * Float32Array.BYTES_PER_ELEMENT, 0);
 
     var texCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, leftWallVertices, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(vTexCoordLocation, 2, gl.FLOAT, false, 
-        5 * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
-    gl.enableVertexAttribArray(vTexCoordLocation);
 
     var indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(vTexCoordLocation, 2, gl.FLOAT, false, 
+        5 * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
+    gl.enableVertexAttribArray(vTexCoordLocation);
 
-    var image1 = document.getElementById("image1");
+
+    // var image1 = document.getElementById("image1");
+    var image1 = LoadedImageFiles["wood.jpg"];
     var texture1 = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture1);
@@ -160,6 +167,7 @@ var setup = function() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image1);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     
     var draw = function() {
         gl.clearColor(0, 0.7, 0.8, 1);
@@ -176,20 +184,25 @@ var setup = function() {
 
         var tModel = mat4.create();
         mat4.multiply(tModel, rotation, tModel);
-
         var tCamera = mat4.create();
         mat4.lookAt(tCamera, [0, 2, 5], [0, 0, 0], [0, 1, 0]);
-
         var tProjection = mat4.create();
         mat4.perspective(tProjection, Math.PI/4, canvas.width / canvas.height, 0.1, 1000);
-
         var tMVP = mat4.create();
         mat4.multiply(tMVP, tCamera, tModel);
         mat4.multiply(tMVP, tProjection, tMVP);
-
         gl.uniformMatrix4fv(mvpMatrixLocation, false, tMVP);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, leftWallVertices, gl.STATIC_DRAW);
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+
+        gl.bufferData(gl.ARRAY_BUFFER, backWallVertices, gl.STATIC_DRAW);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+        
+        gl.bufferData(gl.ARRAY_BUFFER, rightWallVertices, gl.STATIC_DRAW);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+
         requestAnimationFrame(draw);
     };
     requestAnimationFrame(draw);
