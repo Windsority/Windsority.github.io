@@ -4,10 +4,32 @@
         <title>A textured scene</title>
     </head>
     <body>
-        <canvas id="mycanvas" width="500" height="500""></canvas>
+        <canvas id="mycanvas" width="500" height="500" style="border: 2px solid black;"></canvas>
         <br/>
-        You can draw with your mouse on this page.
+        Drag with your mouse to rotate the scene!
+        <br/>
+        <script id="vertexShader" type="glsl">
+            attribute vec3 vPosition;
+            attribute vec2 vTexCoord;
+            varying vec2 fTexCoord;
+            uniform mat4 uMVP;
+            
+            void main() {
+                fTexCoord = vTexCoord;
+                gl_Position = uMVP * vec4(vPosition, 1.0);
+            }
+        </script>
+        <script id="fragmentShader" type="glsl">
+            precision highp float;
+            varying vec2 fTexCoord;
+            uniform sampler2D texSampler;
+            
+            void main() {
+                gl_FragColor = texture2D(texSampler, fTexCoord);
+            } 
+        </script>
         <script src="gl-matrix-min.js"></script>
         <script src="module.js"></script>
+        <img id="image" src="https://live.staticflickr.com/65535/50641871583_78566f4fbb_o.jpg" crossOrigin="anonymous" />
     </body>
 </html>
