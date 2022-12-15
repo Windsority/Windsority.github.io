@@ -30,7 +30,7 @@ function generateVertices(point, length, height, width) {
             vertices.push(point[0]);
             vertices.push(point[1] + i * height);
             vertices.push(point[2] + j * width);
-            vertices.push(i, j);
+            vertices.push(j, -i);
         }
     }
     for (let i = 0; i <= 1; ++i) {
@@ -46,7 +46,7 @@ function generateVertices(point, length, height, width) {
             vertices.push(point[0] + i * length);
             vertices.push(point[1] + j * height);
             vertices.push(point[2]);
-            vertices.push(i, j);
+            vertices.push(i * 0.5, j);
         }
     }
     point[0] += length; 
@@ -57,7 +57,7 @@ function generateVertices(point, length, height, width) {
             vertices.push(point[0]);
             vertices.push(point[1] + i * height);
             vertices.push(point[2] + j * width);
-            vertices.push(-i, -j);
+            vertices.push(-j, -i);
         }
     }
     for (let i = 0; i >= -1; --i) {
@@ -73,7 +73,7 @@ function generateVertices(point, length, height, width) {
             vertices.push(point[0] + i * length);
             vertices.push(point[1] + j * height);
             vertices.push(point[2]);
-            vertices.push(-i, -j);
+            vertices.push(-i, -j * length);
         }
     }
     return new Float32Array(vertices);
@@ -94,12 +94,15 @@ var indices;
 var leftWallVertices;
 var backWallVertices;
 var rightWallVertices;
+var waterVertices;
 
 function getModelData() {
     indices = generateIndices(squares);
     leftWallVertices = generateVertices([-1.5, -1, -1], 0.3, 1.6, 2);
     backWallVertices = generateVertices([-1.2, -1, -1], 2.7, 1.6, 0.3);
     rightWallVertices = generateVertices([1.5, -1, -1], 0.3, 1.6, 2);
+    bottomBankVertices = generateVertices([-1.2, -0.7, -0.7], 2.7, 0.3, 1.7);
+    waterVertices = generateVertices([-1.2, -0.4, -0.7], 2.7, 0.3, 1.7)
 }
 
 var setup = function() {
@@ -132,8 +135,7 @@ var setup = function() {
     var vPositionLocation = gl.getAttribLocation(shaderProgram, "vPosition");
     var vTexCoordLocation = gl.getAttribLocation(shaderProgram, "vTexCoord");
     var mvpMatrixLocation = gl.getUniformLocation(shaderProgram, "uMVP");
-
-
+    var offsetsLocation = gl.getUniformLocation(shaderProgram, "offsets");
 
     getModelData();
     // console.log(leftWallVertices);
@@ -155,26 +157,15 @@ var setup = function() {
 
 
     // var image1 = document.getElementById("image1");
-    var image1 = LoadedImageFiles["wood.jpg"];
-    var texture1 = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture1);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image1);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    
+    var image1 = LoadedImageFiles["wood.jpg"];    
+    var image2 = LoadedImageFiles["water.jpg"];
+    var lastTime = Date.now();
+    var offsets = [0, 0];
+
     var draw = function() {
         gl.clearColor(0, 0.7, 0.8, 1);
         gl.enable(gl.DEPTH_TEST);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        
-
         
         var angle1 = angleParameter1 * Math.PI / 180 / 2;
         var angle2 = angleParameter2 * Math.PI / 180 / 2;
@@ -185,13 +176,27 @@ var setup = function() {
         var tModel = mat4.create();
         mat4.multiply(tModel, rotation, tModel);
         var tCamera = mat4.create();
-        mat4.lookAt(tCamera, [0, 2, 5], [0, 0, 0], [0, 1, 0]);
+        mat4.lookAt(tCamera, [0, 3, 5], [0, 0, 0], [0, 1, 0]);
         var tProjection = mat4.create();
         mat4.perspective(tProjection, Math.PI/4, canvas.width / canvas.height, 0.1, 1000);
         var tMVP = mat4.create();
         mat4.multiply(tMVP, tCamera, tModel);
         mat4.multiply(tMVP, tProjection, tMVP);
         gl.uniformMatrix4fv(mvpMatrixLocation, false, tMVP);
+
+        var texture1 = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture1);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image1);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image1);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+        gl.uniform2fv(offsetsLocation, new Float32Array([0, 0]));
 
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, leftWallVertices, gl.STATIC_DRAW);
@@ -201,6 +206,25 @@ var setup = function() {
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
         
         gl.bufferData(gl.ARRAY_BUFFER, rightWallVertices, gl.STATIC_DRAW);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+        
+        gl.bufferData(gl.ARRAY_BUFFER, bottomBankVertices, gl.STATIC_DRAW);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+    
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image2);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+
+        var currentTime = Date.now();
+        var timeParameter = currentTime - lastTime;
+        lastTime = currentTime;
+
+        offsets[0] += timeParameter * 0.0002;
+        offsets[1] += timeParameter * 0.0002;
+        gl.uniform2fv(offsetsLocation, new Float32Array(offsets));
+        if (offsets[0] >= 1) offsets[0] = offsets[1] = 0;
+    
+        gl.bufferData(gl.ARRAY_BUFFER, waterVertices, gl.STATIC_DRAW);
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
 
         requestAnimationFrame(draw);

@@ -4,7 +4,7 @@
         <title>A textured scene</title>
     </head>
     <body>
-        <canvas id="mycanvas" width="500" height="500" style="border: 2px solid black;"></canvas>
+        <canvas id="mycanvas" width="600" height="500" style="border: 2px solid black;"></canvas>
         <br/>
         Drag with your mouse to rotate the scene!
         <br/>
@@ -23,13 +23,16 @@
             precision highp float;
             varying vec2 fTexCoord;
             uniform sampler2D texSampler;
+            uniform vec2 offsets;
             
             void main() {
-                gl_FragColor = texture2D(texSampler, fTexCoord);
+                vec2 texCoord = fTexCoord + offsets;
+                gl_FragColor = texture2D(texSampler, texCoord);
             } 
         </script>
         <script src="gl-matrix-min.js"></script>
         <script src="wood.imgjs"></script>
+        <script src="water.imgjs"></script>
         <script src="module.js"></script>
         <!-- <img id="image1" src="https://live.staticflickr.com/65535/50641871583_78566f4fbb_o.jpg" crossOrigin="anonymous" /> -->
     </body>
